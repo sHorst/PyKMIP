@@ -210,6 +210,156 @@ class Name(Struct):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+# 3.2
+class AlternativeName(Struct):
+
+    class AlternativeNameValue(TextString):
+
+        def __init__(self, value=None):
+            super(AlternativeName.AlternativeNameValue, self).__init__(value, Tags.ALTERNATIVE_NAME_VALUE)
+
+        def __eq__(self, other):
+            if isinstance(other, AlternativeName.AlternativeNameValue):
+                if self.value == other.value:
+                    return True
+                else:
+                    return False
+            else:
+                return NotImplemented
+
+        def __repr__(self):
+            return "{0}(value={1})".format(
+                type(self).__name__, repr(self.value))
+
+        def __str__(self):
+            return "{0}".format(self.value)
+
+    class AlternativeNameType(Enumeration):
+
+        def __init__(self, value=None):
+            super(AlternativeName.AlternativeNameType, self).__init__(
+                enums.AlternativeNameType, value, Tags.ALTERNATIVE_NAME_TYPE)
+
+        def __eq__(self, other):
+            if isinstance(other, AlternativeName.AlternativeNameType):
+                if self.value == other.value:
+                    return True
+                else:
+                    return False
+            else:
+                return NotImplemented
+
+        def __repr__(self):
+            return "{0}(value={1})".format(
+                type(self).__name__, repr(self.value))
+
+        def __str__(self):
+            return "{0}".format(self.value)
+
+    def __init__(self, alternative_name_value=None, alternative_name_type=None):
+        super(AlternativeName, self).__init__(tag=Tags.ALTERNATIVE_NAME)
+        self.alternative_name_value = alternative_name_value
+        self.alternative_name_type = alternative_name_type
+        self.validate()
+
+    def read(self, istream, kmip_version=enums.KMIPVersion.KMIP_1_2):
+        super(AlternativeName, self).read(istream, kmip_version=kmip_version)
+        tstream = BytearrayStream(istream.read(self.length))
+
+        # Read the value and type of the name
+        self.alternative_name_value = AlternativeName.AlternativeNameValue()
+        self.alternative_name_type = AlternativeName.AlternativeNameType()
+        self.alternative_name_value.read(tstream, kmip_version=kmip_version)
+        self.alternative_name_type.read(tstream, kmip_version=kmip_version)
+
+        self.is_oversized(tstream)
+
+    def write(self, ostream, kmip_version=enums.KMIPVersion.KMIP_1_2):
+        tstream = BytearrayStream()
+
+        # Write the value and type of the name
+        self.alternative_name_value.write(tstream, kmip_version=kmip_version)
+        self.alternative_name_type.write(tstream, kmip_version=kmip_version)
+
+        # Write the length and value of the template attribute
+        self.length = tstream.length()
+        super(AlternativeName, self).write(ostream, kmip_version=kmip_version)
+        ostream.write(tstream.buffer)
+
+    def validate(self):
+        self.__validate()
+
+    def __validate(self):
+        name = AlternativeName.__name__
+        msg = exceptions.ErrorStrings.BAD_EXP_RECV
+        if self.alternative_name_value and \
+                not isinstance(self.alternative_name_value, AlternativeName.AlternativeNameValue) and \
+                not isinstance(self.alternative_name_value, str):
+            member = 'alternative_name_value'
+            raise TypeError(msg.format('{0}.{1}'.format(name, member),
+                                       'alternative_name_value', type(AlternativeName.AlternativeNameValue),
+                                       type(self.alternative_name_value)))
+        if self.alternative_name_type and \
+                not isinstance(self.alternative_name_type, AlternativeName.AlternativeNameType) and \
+                not isinstance(self.alternative_name_type, str):
+            member = 'alternative_name_type'
+            raise TypeError(msg.format('{0}.{1}'.format(name, member),
+                                       'alternative_name_type', type(AlternativeName.AlternativeNameType),
+                                       type(self.alternative_name_type)))
+
+    @classmethod
+    def create(cls, alternative_name_value, alternative_name_type):
+        '''
+            Returns a Name object, populated with the given value and type
+        '''
+        if isinstance(alternative_name_value, AlternativeName.AlternativeNameValue):
+            value = alternative_name_value
+        elif isinstance(alternative_name_value, str):
+            value = cls.AlternativeNameValue(alternative_name_value)
+        else:
+            name = 'AlternativeName'
+            msg = exceptions.ErrorStrings.BAD_EXP_RECV
+            member = 'alternative_name_value'
+            raise TypeError(msg.format('{0}.{1}'.format(name, member),
+                                       'alternative_name_value', type(AlternativeName.AlternativeNameValue),
+                                       type(alternative_name_value)))
+
+        if isinstance(alternative_name_type, AlternativeName.AlternativeNameType):
+            n_type = alternative_name_type
+        elif isinstance(alternative_name_type, Enum):
+            n_type = cls.AlternativeNameType(alternative_name_type)
+        else:
+            name = 'AlternativeName'
+            msg = exceptions.ErrorStrings.BAD_EXP_RECV
+            member = 'alternative_name_type'
+            raise TypeError(msg.format('{0}.{1}'.format(name, member),
+                                       'alternative_name_type', type(AlternativeName.AlternativeNameType),
+                                       type(alternative_name_type)))
+
+        return AlternativeName(alternative_name_value=value,
+                    alternative_name_type=n_type)
+
+    def __repr__(self):
+        return "{0}(type={1},value={2})".format(
+            type(self).__name__,
+            repr(self.alternative_name_type),
+            repr(self.alternative_name_value))
+
+    def __str__(self):
+        return "{0}".format(self.alternative_name_value.value)
+
+    def __eq__(self, other):
+        if isinstance(other, AlternativeName):
+            if self.alternative_name_value == other.alternative_name_value and \
+                    self.alternative_name_type == other.alternative_name_type:
+                return True
+            else:
+                return False
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 # 3.3
 class ObjectType(Enumeration):

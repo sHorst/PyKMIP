@@ -27,6 +27,8 @@ class AttributeValueFactory(object):
             return attributes.UniqueIdentifier(value)
         elif name is enums.AttributeType.NAME:
             return self._create_name(value)
+        elif name is enums.AttributeType.ALTERNATIVE_NAME:
+            return self._create_alternative_name(value)
         elif name is enums.AttributeType.OBJECT_TYPE:
             return attributes.ObjectType(value)
         elif name is enums.AttributeType.CRYPTOGRAPHIC_ALGORITHM:
@@ -122,6 +124,8 @@ class AttributeValueFactory(object):
             return attributes.UniqueIdentifier(value)
         elif enum is enums.Tags.NAME:
             return self._create_name(value)
+        elif enum is enums.Tags.ALTERNATIVE_NAME:
+            return self._create_alternative_name(value)
         elif enum is enums.Tags.OBJECT_TYPE:
             return attributes.ObjectType(value)
         elif enum is enums.Tags.CRYPTOGRAPHIC_ALGORITHM:
@@ -218,6 +222,22 @@ class AttributeValueFactory(object):
                                  '{0}'.format(name))
         else:
             return attributes.Name()
+
+    def _create_alternative_name(self, alternative_name):
+        if alternative_name is not None:
+            if isinstance(alternative_name, attributes.AlternativeName):
+                return attributes.AlternativeName.create(alternative_name.alternative_name_value, alternative_name.alternative_name_type)
+
+            elif isinstance(alternative_name, str):
+                return attributes.AlternativeName.create(
+                    alternative_name,
+                    enums.NameType.UNINTERPRETED_TEXT_STRING
+                )
+            else:
+                raise ValueError('Unrecognized attribute type: '
+                                 '{0}'.format(alternative_name))
+        else:
+            return attributes.AlternativeName()
 
     def _create_cryptographic_length(self, length):
         if length is not None and not isinstance(length, int):
