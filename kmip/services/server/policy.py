@@ -160,6 +160,30 @@ class AttributePolicy(object):
                 ),
                 contents.ProtocolVersion(1, 0)
             ),
+            'Alternative Name': AttributeRuleSet(
+                False,
+                ('client', ),
+                True,
+                True,
+                True,
+                True,
+                (),
+                (
+                    enums.ObjectType.CERTIFICATE,
+                    enums.ObjectType.SYMMETRIC_KEY,
+                    enums.ObjectType.PUBLIC_KEY,
+                    enums.ObjectType.PRIVATE_KEY,
+                    enums.ObjectType.SPLIT_KEY,
+                    enums.ObjectType.TEMPLATE,
+                    enums.ObjectType.SECRET_DATA,
+                    enums.ObjectType.OPAQUE_DATA,
+                    # KMIP 1.2
+                    enums.ObjectType.PGP_KEY,
+                    # KMIP 2.0
+                    enums.ObjectType.CERTIFICATE_REQUEST,
+                ),
+                contents.ProtocolVersion(1, 2)
+            ),
             'Name': AttributeRuleSet(
                 False,
                 ('client', ),
