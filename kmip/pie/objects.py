@@ -47,6 +47,27 @@ app_specific_info_map = sqlalchemy.Table(
     )
 )
 
+alternative_name_map = sqlalchemy.Table(
+    "alternative_name_map",
+    sql.Base.metadata,
+    sqlalchemy.Column(
+        "managed_object_id",
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey(
+            "managed_objects.uid",
+            ondelete="CASCADE"
+        )
+    ),
+    sqlalchemy.Column(
+        "alternative_name_id",
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey(
+            "alternative_name.id",
+            ondelete="CASCADE"
+        )
+    )
+)
+
 
 object_group_map = sqlalchemy.Table(
     "object_group_map",
@@ -117,6 +138,13 @@ class ManagedObject(sql.Base):
         order_by="ApplicationSpecificInformation.id",
         passive_deletes=True
     )
+    alternative_name = sqlalchemy.orm.relationship(
+        "AlternativeName",
+        secondary=alternative_name_map,
+        back_populates="managed_objects",
+        order_by="AlternativeName.id",
+        passive_deletes=True
+    )
     object_groups = sqlalchemy.orm.relationship(
         "ObjectGroup",
         secondary=object_group_map,
@@ -152,6 +180,7 @@ class ManagedObject(sql.Base):
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
         self._application_specific_informations = list()
+        self._alternative_name = list()
         self._contact_information = None
         self._object_groups = list()
 
@@ -658,7 +687,7 @@ class SymmetricKey(Key):
     }
 
     def __init__(self, algorithm, length, value, masks=None,
-                 name='Symmetric Key', key_wrapping_data=None, app_specific_info=None):
+                 name='Symmetric Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None):
         """
         Create a SymmetricKey.
 
@@ -676,6 +705,7 @@ class SymmetricKey(Key):
                 Optional, defaults to None.
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
+            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
         """
         super(SymmetricKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -694,6 +724,9 @@ class SymmetricKey(Key):
 
         if app_specific_info:
             self._application_specific_informations = app_specific_info
+
+        if alternative_name:
+            self._alternative_name = alternative_name
 
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
@@ -826,7 +859,7 @@ class PublicKey(Key):
 
     def __init__(self, algorithm, length, value,
                  format_type=enums.KeyFormatType.X_509, masks=None,
-                 name='Public Key', key_wrapping_data=None, app_specific_info=None):
+                 name='Public Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None):
         """
         Create a PublicKey.
 
@@ -846,6 +879,7 @@ class PublicKey(Key):
                 Optional, defaults to None.
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
+            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
         """
         super(PublicKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -868,6 +902,9 @@ class PublicKey(Key):
 
         if app_specific_info:
             self._application_specific_informations = app_specific_info
+
+        if alternative_name:
+            self._alternative_name = alternative_name
 
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
@@ -996,7 +1033,7 @@ class PrivateKey(Key):
     }
 
     def __init__(self, algorithm, length, value, format_type, masks=None,
-                 name='Private Key', key_wrapping_data=None, app_specific_info=None):
+                 name='Private Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None):
         """
         Create a PrivateKey.
 
@@ -1015,6 +1052,7 @@ class PrivateKey(Key):
                 Optional, defaults to None.
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
+            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
         """
         super(PrivateKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -1037,6 +1075,9 @@ class PrivateKey(Key):
 
         if app_specific_info:
             self._application_specific_informations = app_specific_info
+
+        if alternative_name:
+            self._alternative_name = alternative_name
 
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
@@ -1595,7 +1636,7 @@ class SecretData(CryptographicObject):
         'sqlite_autoincrement': True
     }
 
-    def __init__(self, value, data_type, masks=None, name='Secret Data', app_specific_info=None):
+    def __init__(self, value, data_type, masks=None, name='Secret Data', app_specific_info=None, alternative_name=None):
         """
         Create a SecretData object.
 
@@ -1608,6 +1649,7 @@ class SecretData(CryptographicObject):
             name(string): The string name of the key.
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
+            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
         """
         super(SecretData, self).__init__()
 
@@ -1619,6 +1661,9 @@ class SecretData(CryptographicObject):
         
         if app_specific_info:
             self._application_specific_informations = app_specific_info
+
+        if alternative_name:
+            self._alternative_name = alternative_name
 
         if masks:
             self.cryptographic_usage_masks = masks
@@ -1893,6 +1938,104 @@ class ApplicationSpecificInformation(sql.Base):
 
     def __ne__(self, other):
         if isinstance(other, ApplicationSpecificInformation):
+            return not (self == other)
+        else:
+            return NotImplemented
+
+
+class AlternativeName(sql.Base):
+    __tablename__ = "alternative_name"
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    _alternative_name_value = sqlalchemy.Column(
+        "value",
+        sqlalchemy.String
+    )
+    _alternative_name_type = sqlalchemy.Column(
+        "type",
+        sql.EnumType(enums.AlternativeNameType)
+    )
+    managed_objects = sqlalchemy.orm.relationship(
+        "ManagedObject",
+        secondary=alternative_name_map,
+        back_populates="alternative_name"
+    )
+
+    def __init__(self,
+                 alternative_name_value=None,
+                 alternative_name_type=enums.AlternativeNameType.UNINTERPRETED_TEXT_STRING):
+        """
+        Create an AlternativeName attribute.
+
+        Args:
+            alternative_name_value (str): A string specifying the Value. Required.
+            alternative_name_type (AlternativeNameType): A Type specifying the Alternative Name Type.
+                Required.
+        """
+        super(AlternativeName, self).__init__()
+
+        self.alternative_name_value = alternative_name_value
+        self.alternative_name_type = alternative_name_type
+
+    @property
+    def alternative_name_value(self):
+        return self._alternative_name_value
+
+    @alternative_name_value.setter
+    def alternative_name_value(self, value):
+        if (value is None) or (isinstance(value, six.string_types)):
+            self._alternative_name_value = value
+        else:
+            raise TypeError("The Alternative Name Value must be a string.")
+
+    @property
+    def alternative_name_type(self):
+        return self._alternative_name_type
+
+    @alternative_name_type.setter
+    def alternative_name_type(self, value):
+        if (value is None) or (isinstance(value, enums.AlternativeNameType)):
+            self._alternative_name_type = value
+        else:
+            raise TypeError("The Alternative Name type must be a AlternativeNameType.")
+
+    def __repr__(self):
+        alternative_name_value = "alternative_name_value='{}'".format(
+            self.alternative_name_value
+        )
+        alternative_name_type = "alternative_name_type='{}'".format(
+            self.alternative_name_type
+        )
+
+        return "AlternativeName({})".format(
+            ", ".join(
+                [
+                    alternative_name_value,
+                    alternative_name_type
+                ]
+            )
+        )
+
+    def __str__(self):
+        return str(
+            {
+                "alternative_name_value": self.alternative_name_value,
+                "alternative_name_type": self.alternative_name_type
+            }
+        )
+
+    def __eq__(self, other):
+        if isinstance(other, AlternativeName):
+            if self.alternative_name_value != other.alternative_name_value:
+                return False
+            elif self.alternative_name_type != other.alternative_name_type:
+                return False
+            else:
+                return True
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, AlternativeName):
             return not (self == other)
         else:
             return NotImplemented

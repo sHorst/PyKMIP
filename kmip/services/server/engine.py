@@ -740,6 +740,15 @@ class KmipEngine(object):
                     }
                 )
             return values
+        elif attr_name == "Alternative Name":
+            alternative_names = []
+            for alternative_name in managed_object.alternative_name:
+                alternative_name = attributes.AlternativeName(
+                    attributes.AlternativeName.AlternativeNameValue(alternative_name.alternative_name_value),
+                    attributes.AlternativeName.AlternativeNameType(alternative_name.alternative_name_type),
+                )
+                alternative_names.append(alternative_name)
+            return alternative_names
         elif attr_name == 'Contact Information':
             return None
         elif attr_name == 'Last Change Date':
@@ -782,6 +791,13 @@ class KmipEngine(object):
             for count, v in enumerate(managed_object.app_specific_info):
                 if ((a.application_namespace == v.application_namespace) and
                         (a.application_data == v.application_data)):
+                    return count
+            return None
+        elif attribute_name == "Alternative Name":
+            a = attribute_value
+            for count, v in enumerate(managed_object.alternative_name):
+                if ((a.alternative_name_value == v.alternative_name_value) and
+                        (a.alternative_name_type == v.alternative_name_type)):
                     return count
             return None
         elif attribute_name == "Certificate Type":
@@ -889,6 +905,14 @@ class KmipEngine(object):
                             application_data=value.application_data
                         )
                     )
+            elif attribute_name == "Alternative Name":
+                for value in attribute_value:
+                    managed_object.alternative_name.append(
+                        objects.AlternativeName(
+                            alternative_name_value=value.alternative_name_value,
+                            application_name_type=value.alternative_name_type
+                        )
+                    )
             elif attribute_name == "Object Group":
                 for value in attribute_value:
                     # TODO (peterhamilton) Enforce uniqueness of object groups
@@ -962,6 +986,10 @@ class KmipEngine(object):
             a = managed_object.app_specific_info[attribute_index]
             a.application_namespace = attribute_value.application_namespace
             a.application_data = attribute_value.application_data
+        elif attribute_name == "Alternative Name":
+            a = managed_object.alternative_name[attribute_index]
+            a.alternative_name_value = attribute_value.alternative_name_value
+            a.alternative_name_type = attribute_value.application_type
         elif attribute_name == "Name":
             name_value = attribute_value.name_value
             managed_object.names[attribute_index] = name_value.value
@@ -1006,6 +1034,14 @@ class KmipEngine(object):
                         application_namespace=namespace,
                         application_data=attribute_value.application_data
                     )
+                elif attribute_name == "Alternative Name":
+                    attribute_list = managed_object.alternative_name
+                    if attribute_value is not None:
+                        alternative_name_value = attribute_value.alternative_name_value
+                        attribute_value = objects.AlternativeName(
+                            alternative_name_value=alternative_name_value,
+                            alternative_name_type=attribute_value.alternative_name_type
+                        )
             elif attribute_name == "Object Group":
                 attribute_list = managed_object.object_groups
                 if attribute_value is not None:
@@ -2264,6 +2300,26 @@ class KmipEngine(object):
                                 "specific information attributes.".format(
                                     v.get("application_namespace"),
                                     v.get("application_data")
+                                )
+                            )
+                            add_object = False
+                            break
+                    elif name == "Alternative Name":
+                        alternative_name_value = value.alternative_name_value
+                        alternative_name_type = value.alternative_name_type
+                        v = {
+                            "alternative_name_value": alternative_name_value,
+                            "alternative_name_type": alternative_name_type
+                        }
+                        if v not in attribute:
+                            self._logger.debug(
+                                "Failed match: "
+                                "the specified alternative name "
+                                " ('{}', '{}') does not match any "
+                                "of the object's associated application "
+                                "specific information attributes.".format(
+                                    v.get("alternative_name_value"),
+                                    v.get("alternative_name_type")
                                 )
                             )
                             add_object = False
