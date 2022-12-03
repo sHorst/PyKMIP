@@ -910,7 +910,7 @@ class KmipEngine(object):
                     managed_object.alternative_name.append(
                         objects.AlternativeName(
                             alternative_name_value=value.alternative_name_value,
-                            application_name_type=value.alternative_name_type
+                            alternative_name_type=value.alternative_name_type
                         )
                     )
             elif attribute_name == "Object Group":
