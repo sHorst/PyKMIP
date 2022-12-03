@@ -1139,10 +1139,14 @@ class AttributePolicy(object):
             bool: True if the attribute is supported by the current KMIP
                 version. False otherwise.
         """
-        if attribute not in self._attribute_rule_sets.keys():
+        if attribute.startswith('x-'):
+            rule_set = self._attribute_rule_sets.get("Custom Attribute")
+        else:
+            rule_set = self._attribute_rule_sets.get(attribute)
+
+        if rule_set is None:
             return False
 
-        rule_set = self._attribute_rule_sets.get(attribute)
         if self._version >= rule_set.version_added:
             return True
         else:
@@ -1156,7 +1160,14 @@ class AttributePolicy(object):
             attribute (string): The name of the attribute
                 (e.g., 'Unique Identifier'). Required.
         """
-        rule_set = self._attribute_rule_sets.get(attribute)
+        if attribute.startswith('x-'):
+            rule_set = self._attribute_rule_sets.get("Custom Attribute")
+        else:
+            rule_set = self._attribute_rule_sets.get(attribute)
+
+        if rule_set is None:
+            return False
+
         if rule_set.version_deprecated:
             if self._version >= rule_set.version_deprecated:
                 return True
@@ -1176,7 +1187,10 @@ class AttributePolicy(object):
             bool: True if the attribute can be deleted by the client. False
                 otherwise.
         """
-        rule_set = self._attribute_rule_sets.get(attribute)
+        if attribute.startswith('x-'):
+            rule_set = self._attribute_rule_sets.get("Custom Attribute")
+        else:
+            rule_set = self._attribute_rule_sets.get(attribute)
         return rule_set.deletable_by_client
 
     def is_attribute_modifiable_by_client(self, attribute):
@@ -1190,7 +1204,10 @@ class AttributePolicy(object):
             bool: True if the attribute can be modified by the client. False
                 otherwise.
         """
-        rule_set = self._attribute_rule_sets.get(attribute)
+        if attribute.startswith('x-'):
+            rule_set = self._attribute_rule_sets.get("Custom Attribute")
+        else:
+            rule_set = self._attribute_rule_sets.get(attribute)
         return rule_set.modifiable_by_client
 
     def is_attribute_applicable_to_object_type(self, attribute, object_type):
@@ -1207,7 +1224,14 @@ class AttributePolicy(object):
                 False otherwise.
         """
         # TODO (peterhamilton) Handle applicability between certificate types
-        rule_set = self._attribute_rule_sets.get(attribute)
+        if attribute.startswith('x-'):
+            rule_set = self._attribute_rule_sets.get('Custom Attribute')
+        else:
+            rule_set = self._attribute_rule_sets.get(attribute)
+
+        if rule_set is None:
+            return False
+
         if object_type in rule_set.applies_to_object_types:
             return True
         else:
@@ -1222,7 +1246,11 @@ class AttributePolicy(object):
                 (e.g., 'State'). Required.
         """
         # TODO (peterhamilton) Handle multivalue swap between certificate types
-        rule_set = self._attribute_rule_sets.get(attribute)
+        if attribute.startswith('x-'):
+            rule_set = self._attribute_rule_sets.get('Custom Attribute')
+        else:
+            rule_set = self._attribute_rule_sets.get(attribute)
+
         return rule_set.multiple_instances_permitted
 
     def get_all_attribute_names(self):

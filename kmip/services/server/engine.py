@@ -755,6 +755,16 @@ class KmipEngine(object):
             return None
         elif attr_name == "Sensitive":
             return managed_object.sensitive
+        # 'Custom Attribute':
+        elif attr_name.startswith('x-') or attr_name == 'Custom Attribute':
+            attrs = []
+            for custom_attribute in managed_object.custom_attribute:
+                attrs.append({
+                    'custom_attribute_name': custom_attribute.custom_attribute_name,
+                    'custom_attribute_value': custom_attribute.custom_attribute_value,
+
+                })
+            return attrs
         else:
             # Since custom attribute names are possible, just return None
             # for unrecognized attributes. This satisfies the spec.
@@ -854,6 +864,13 @@ class KmipEngine(object):
             if attribute_value.value == str(managed_object.unique_identifier):
                 return 0
             return None
+        # Custom Attribute
+        elif attribute_name.startswith('x-'):
+            for count, v in enumerate(managed_object.custom_attribute):
+                if ((attribute_name == v.custom_attribute_name) and
+                        (attribute_value.value == v.custom_attribute_value)):
+                    return count
+            return None
         else:
             return None
 
@@ -919,6 +936,15 @@ class KmipEngine(object):
                     # to avoid wasted space.
                     managed_object.object_groups.append(
                         objects.ObjectGroup(object_group=value.value)
+                    )
+            # Custom Attribute
+            elif attribute_name.startswith('x-'):
+                for value in attribute_value:
+                    managed_object.custom_attribute.append(
+                        objects.CustomAttribute(
+                            custom_attribute_name=attribute_name,
+                            custom_attribute_value=value.value
+                        )
                     )
             else:
                 # TODO (peterhamilton) Remove when all attributes are supported
@@ -996,6 +1022,11 @@ class KmipEngine(object):
         elif attribute_name == "Object Group":
             a = managed_object.object_groups[attribute_index]
             a.object_group = attribute_value.value
+        # Custom Attribute
+        elif attribute_name.startswith('x-'):
+            a = managed_object.custom_attribute[attribute_index]
+            a.custom_attribute_name = attribute_value.custom_attribute_name
+            a.custom_attribute_value = attribute_value.custom_attribute_value
 
     def _delete_attribute_from_managed_object(self, managed_object, attribute):
         attribute_name, attribute_index, attribute_value = attribute
@@ -1034,19 +1065,28 @@ class KmipEngine(object):
                         application_namespace=namespace,
                         application_data=attribute_value.application_data
                     )
-                elif attribute_name == "Alternative Name":
-                    attribute_list = managed_object.alternative_name
-                    if attribute_value is not None:
-                        alternative_name_value = attribute_value.alternative_name_value
-                        attribute_value = objects.AlternativeName(
-                            alternative_name_value=alternative_name_value,
-                            alternative_name_type=attribute_value.alternative_name_type
-                        )
+            elif attribute_name == "Alternative Name":
+                attribute_list = managed_object.alternative_name
+                if attribute_value is not None:
+                    alternative_name_value = attribute_value.alternative_name_value
+                    attribute_value = objects.AlternativeName(
+                        alternative_name_value=alternative_name_value,
+                        alternative_name_type=attribute_value.alternative_name_type
+                    )
             elif attribute_name == "Object Group":
                 attribute_list = managed_object.object_groups
                 if attribute_value is not None:
                     attribute_value = objects.ObjectGroup(
                         object_group=attribute_value.value
+                    )
+            # Custom Attribute
+            elif attribute_name.startswith('x-'):
+                attribute_list = managed_object.custom_attribute
+                if attribute_value is not None:
+                    custom_attribute_value = attribute_value.value
+                    attribute_value = objects.CustomAttribute(
+                        custom_attribute_name=attribute_name,
+                        custom_attribute_value=custom_attribute_value
                     )
             else:
                 raise exceptions.InvalidField(
@@ -2317,6 +2357,22 @@ class KmipEngine(object):
                                 " ('{}') does not match any "
                                 "of the object's alternative name "
                                 "attributes.".format(v)
+                            )
+                            add_object = False
+                            break
+                    # Custom Attribute
+                    elif name.startswith('x-'):
+                        v = {
+                            'custom_attribute_name': name,
+                            'custom_attribute_value': value.value,
+                        }
+
+                        if v not in attribute:
+                            self._logger.debug(
+                                "Failed match: "
+                                "the Custom Attribute '{}' ('{}') does not "
+                                "match any of the object's custom attributes '{}'.".format(name, value, name)
+
                             )
                             add_object = False
                             break

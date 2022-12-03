@@ -68,6 +68,26 @@ alternative_name_map = sqlalchemy.Table(
     )
 )
 
+custom_attribute_map = sqlalchemy.Table(
+    "custom_attribute_map",
+    sql.Base.metadata,
+    sqlalchemy.Column(
+        "managed_object_id",
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey(
+            "managed_objects.uid",
+            ondelete="CASCADE"
+        )
+    ),
+    sqlalchemy.Column(
+        "custom_attribute_id",
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey(
+            "custom_attribute.id",
+            ondelete="CASCADE"
+        )
+    )
+)
 
 object_group_map = sqlalchemy.Table(
     "object_group_map",
@@ -145,6 +165,13 @@ class ManagedObject(sql.Base):
         order_by="AlternativeName.id",
         passive_deletes=True
     )
+    custom_attribute = sqlalchemy.orm.relationship(
+        "CustomAttribute",
+        secondary=custom_attribute_map,
+        back_populates="managed_objects",
+        order_by="CustomAttribute.id",
+        passive_deletes=True
+    )
     object_groups = sqlalchemy.orm.relationship(
         "ObjectGroup",
         secondary=object_group_map,
@@ -181,6 +208,7 @@ class ManagedObject(sql.Base):
         # and are subject to change.
         self._application_specific_informations = list()
         self._alternative_name = list()
+        self._custom_attribute = list()
         self._contact_information = None
         self._object_groups = list()
 
@@ -687,7 +715,7 @@ class SymmetricKey(Key):
     }
 
     def __init__(self, algorithm, length, value, masks=None,
-                 name='Symmetric Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None):
+                 name='Symmetric Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a SymmetricKey.
 
@@ -706,6 +734,7 @@ class SymmetricKey(Key):
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
             alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
         """
         super(SymmetricKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -727,6 +756,9 @@ class SymmetricKey(Key):
 
         if alternative_name:
             self._alternative_name = alternative_name
+
+        if custom_attribute:
+            self._custom_attribute = custom_attribute
 
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
@@ -859,7 +891,7 @@ class PublicKey(Key):
 
     def __init__(self, algorithm, length, value,
                  format_type=enums.KeyFormatType.X_509, masks=None,
-                 name='Public Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None):
+                 name='Public Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a PublicKey.
 
@@ -880,6 +912,7 @@ class PublicKey(Key):
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
             alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
         """
         super(PublicKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -905,6 +938,9 @@ class PublicKey(Key):
 
         if alternative_name:
             self._alternative_name = alternative_name
+
+        if custom_attribute:
+            self._custom_attribute = custom_attribute
 
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
@@ -1033,7 +1069,7 @@ class PrivateKey(Key):
     }
 
     def __init__(self, algorithm, length, value, format_type, masks=None,
-                 name='Private Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None):
+                 name='Private Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a PrivateKey.
 
@@ -1053,6 +1089,7 @@ class PrivateKey(Key):
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
             alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
         """
         super(PrivateKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -1078,6 +1115,9 @@ class PrivateKey(Key):
 
         if alternative_name:
             self._alternative_name = alternative_name
+
+        if custom_attribute:
+            self._custom_attribute = custom_attribute
 
         # All remaining attributes are not considered part of the public API
         # and are subject to change.
@@ -1636,7 +1676,7 @@ class SecretData(CryptographicObject):
         'sqlite_autoincrement': True
     }
 
-    def __init__(self, value, data_type, masks=None, name='Secret Data', app_specific_info=None, alternative_name=None):
+    def __init__(self, value, data_type, masks=None, name='Secret Data', app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a SecretData object.
 
@@ -1650,6 +1690,7 @@ class SecretData(CryptographicObject):
             app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
                 Optional, defaults to None.
             alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
         """
         super(SecretData, self).__init__()
 
@@ -1664,6 +1705,9 @@ class SecretData(CryptographicObject):
 
         if alternative_name:
             self._alternative_name = alternative_name
+
+        if custom_attribute:
+            self._custom_attribute = custom_attribute
 
         if masks:
             self.cryptographic_usage_masks = masks
@@ -2036,6 +2080,103 @@ class AlternativeName(sql.Base):
 
     def __ne__(self, other):
         if isinstance(other, AlternativeName):
+            return not (self == other)
+        else:
+            return NotImplemented
+
+
+class CustomAttribute(sql.Base):
+    __tablename__ = "custom_attribute"
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    _custom_attribute_name = sqlalchemy.Column(
+        "name",
+        sqlalchemy.String
+    )
+    _custom_attribute_value = sqlalchemy.Column(
+        "value",
+        sqlalchemy.String
+    )
+    managed_objects = sqlalchemy.orm.relationship(
+        "ManagedObject",
+        secondary=custom_attribute_map,
+        back_populates="custom_attribute"
+    )
+
+    def __init__(self,
+                 custom_attribute_name=None,
+                 custom_attribute_value=None):
+        """
+        Create an Custom attribute.
+
+        Args:
+            custom_attribute_name (str): A string specifying the Name. Required.
+            custom_attribute_value (str): A string specifying the Value. Required.
+        """
+        super(CustomAttribute, self).__init__()
+
+        self.custom_attribute_name = custom_attribute_name
+        self.custom_attribute_value = custom_attribute_value
+
+    @property
+    def custom_attribute_name(self):
+        return self._custom_attribute_name
+
+    @custom_attribute_name.setter
+    def custom_attribute_name(self, value):
+        if (value is None) or (isinstance(value, six.string_types)):
+            self._custom_attribute_name = value
+        else:
+            raise TypeError("The Custom Attribute Name must be a string.")
+
+    @property
+    def custom_attribute_value(self):
+        return self._custom_attribute_value
+
+    @custom_attribute_value.setter
+    def custom_attribute_value(self, value):
+        if (value is None) or (isinstance(value, six.string_types)):
+            self._custom_attribute_value = value
+        else:
+            raise TypeError("The Custom Attribute Value must be a string.")
+
+    def __repr__(self):
+        custom_attribute_name = "custom_attribute_name='{}'".format(
+            self.custom_attribute_name
+        )
+        custom_attribute_value = "custom_attribute_value='{}'".format(
+            self.custom_attribute_value
+        )
+
+        return "CustomAttribute({})".format(
+            ", ".join(
+                [
+                    custom_attribute_name,
+                    custom_attribute_value
+                ]
+            )
+        )
+
+    def __str__(self):
+        return str(
+            {
+                "custom_attribute_name": self.custom_attribute_name,
+                "custom_attribute_value": self.custom_attribute_value
+            }
+        )
+
+    def __eq__(self, other):
+        if isinstance(other, CustomAttribute):
+            if self.custom_attribute_name != other.custom_attribute_name:
+                return False
+            elif self.custom_attribute_value != other.custom_attribute_value:
+                return False
+            else:
+                return True
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, CustomAttribute):
             return not (self == other)
         else:
             return NotImplemented
