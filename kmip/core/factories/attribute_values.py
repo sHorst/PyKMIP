@@ -231,7 +231,7 @@ class AttributeValueFactory(object):
             elif isinstance(alternative_name, str):
                 return attributes.AlternativeName.create(
                     alternative_name,
-                    enums.NameType.UNINTERPRETED_TEXT_STRING
+                    enums.AlternativeNameType.UNINTERPRETED_TEXT_STRING
                 )
             else:
                 raise ValueError('Unrecognized attribute type: '
