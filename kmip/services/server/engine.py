@@ -909,8 +909,8 @@ class KmipEngine(object):
                 for value in attribute_value:
                     managed_object.alternative_name.append(
                         objects.AlternativeName(
-                            alternative_name_value=value.alternative_name_value,
-                            alternative_name_type=value.alternative_name_type
+                            alternative_name_value=value.alternative_name_value.value,
+                            alternative_name_type=value.alternative_name_type.value
                         )
                     )
             elif attribute_name == "Object Group":
@@ -2305,22 +2305,18 @@ class KmipEngine(object):
                             add_object = False
                             break
                     elif name == "Alternative Name":
-                        alternative_name_value = value.alternative_name_value
-                        alternative_name_type = value.alternative_name_type
-                        v = {
-                            "alternative_name_value": alternative_name_value,
-                            "alternative_name_type": alternative_name_type
-                        }
+                        v = attributes.AlternativeName(
+                            value.alternative_name_value,
+                            value.alternative_name_type
+                        )
+
                         if v not in attribute:
                             self._logger.debug(
                                 "Failed match: "
                                 "the specified alternative name "
-                                " ('{}', '{}') does not match any "
-                                "of the object's associated application "
-                                "specific information attributes.".format(
-                                    v.get("alternative_name_value"),
-                                    v.get("alternative_name_type")
-                                )
+                                " ('{}') does not match any "
+                                "of the object's alternative name "
+                                "attributes.".format(v)
                             )
                             add_object = False
                             break
