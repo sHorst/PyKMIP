@@ -715,7 +715,8 @@ class SymmetricKey(Key):
     }
 
     def __init__(self, algorithm, length, value, masks=None,
-                 name='Symmetric Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None, custom_attribute=None):
+                 name='Symmetric Key', key_wrapping_data=None,
+                 app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a SymmetricKey.
 
@@ -731,10 +732,13 @@ class SymmetricKey(Key):
             key_wrapping_data(dict): A dictionary containing key wrapping data
                 settings, describing how the key value has been wrapped.
                 Optional, defaults to None.
-            app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
-                Optional, defaults to None.
-            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
-            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
+            app_specific_info(list): A list of dictionaries containing
+                application_namespace and application_data. Optional, defaults
+                to None.
+            alternative_name(list): A list of dictionaries containing
+                alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing
+                custom attributes. Optional, defaults to None.
         """
         super(SymmetricKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -891,7 +895,8 @@ class PublicKey(Key):
 
     def __init__(self, algorithm, length, value,
                  format_type=enums.KeyFormatType.X_509, masks=None,
-                 name='Public Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None, custom_attribute=None):
+                 name='Public Key', key_wrapping_data=None,
+                 app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a PublicKey.
 
@@ -909,10 +914,13 @@ class PublicKey(Key):
             key_wrapping_data(dict): A dictionary containing key wrapping data
                 settings, describing how the key value has been wrapped.
                 Optional, defaults to None.
-            app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
-                Optional, defaults to None.
-            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
-            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
+            app_specific_info(list): A list of dictionaries containing
+                application_namespace and application_data. Optional, defaults
+                to None.
+            alternative_name(list): A list of dictionaries containing
+                alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing
+                custom attributes. Optional, defaults to None.
         """
         super(PublicKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -1069,7 +1077,8 @@ class PrivateKey(Key):
     }
 
     def __init__(self, algorithm, length, value, format_type, masks=None,
-                 name='Private Key', key_wrapping_data=None, app_specific_info=None, alternative_name=None, custom_attribute=None):
+                 name='Private Key', key_wrapping_data=None,
+                 app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a PrivateKey.
 
@@ -1086,10 +1095,13 @@ class PrivateKey(Key):
             key_wrapping_data(dict): A dictionary containing key wrapping data
                 settings, describing how the key value has been wrapped.
                 Optional, defaults to None.
-            app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
-                Optional, defaults to None.
-            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
-            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
+            app_specific_info(list): A list of dictionaries containing
+                application_namespace and application_data. Optional, defaults
+                to None.
+            alternative_name(list): A list of dictionaries containing
+                alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing
+                custom attributes. Optional, defaults to None.
         """
         super(PrivateKey, self).__init__(
             key_wrapping_data=key_wrapping_data
@@ -1676,7 +1688,8 @@ class SecretData(CryptographicObject):
         'sqlite_autoincrement': True
     }
 
-    def __init__(self, value, data_type, masks=None, name='Secret Data', app_specific_info=None, alternative_name=None, custom_attribute=None):
+    def __init__(self, value, data_type, masks=None, name='Secret Data',
+                 app_specific_info=None, alternative_name=None, custom_attribute=None):
         """
         Create a SecretData object.
 
@@ -1687,10 +1700,13 @@ class SecretData(CryptographicObject):
             masks(list): A list of CryptographicUsageMask enumerations
                 defining how the key will be used.
             name(string): The string name of the key.
-            app_specific_info(list): A list of dictionaries containing application_namespace and application_data.
-                Optional, defaults to None.
-            alternative_name(list): A list of dictionaries containing alternative_names. Optional, defaults to None.
-            custom_attribute(list): A list of dictionaries containing custom attributes. Optional, defaults to None.
+            app_specific_info(list): A list of dictionaries containing
+                application_namespace and application_data. Optional, defaults
+                to None.
+            alternative_name(list): A list of dictionaries containing
+                alternative_names. Optional, defaults to None.
+            custom_attribute(list): A list of dictionaries containing
+                custom attributes. Optional, defaults to None.
         """
         super(SecretData, self).__init__()
 
@@ -1699,7 +1715,7 @@ class SecretData(CryptographicObject):
         self.value = value
         self.data_type = data_type
         self.names = [name]
-        
+
         if app_specific_info:
             self._application_specific_informations = app_specific_info
 
